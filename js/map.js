@@ -53,7 +53,6 @@ function createBaseLayers() {
   };
 }
 
-const DEFAULT_OVERLAY = 'Bahnnetz';
 const COUNTRY_OVERLAY = 'Bereiste Länder';
 
 // OpenRailwayMap gibt es in mehreren Darstellungen; „Bahnnetz“ ist die übliche.
@@ -64,7 +63,7 @@ function createRailwayLayers() {
     attribution: 'Gleise: <a href="https://www.openrailwaymap.org/">OpenRailwayMap</a> (CC-BY-SA)',
   });
   return {
-    [DEFAULT_OVERLAY]: railway('standard', 0.45),
+    'Bahnnetz': railway('standard', 0.45),
     'Elektrifizierung': railway('electrification', 0.6),
     'Höchstgeschwindigkeit': railway('maxspeed', 0.6),
   };
@@ -119,7 +118,8 @@ export function createMap(element, { onMapClick, onStopMoved, onTripClick }) {
   const overlays = { ...createRailwayLayers(), [COUNTRY_OVERLAY]: countryLayer };
   const saved = readLayerChoice();
   (baseLayers[saved.base] ?? Object.values(baseLayers)[0]).addTo(map);
-  for (const name of saved.overlays ?? [DEFAULT_OVERLAY]) overlays[name]?.addTo(map);
+  // Vorgabe: nur die Grundkarte – Lagoon zeigt die Gleise schon dezent selbst.
+  for (const name of saved.overlays ?? []) overlays[name]?.addTo(map);
 
   L.control.layers(baseLayers, overlays).addTo(map);
   // Gewählte Ebenen merken, damit die Karte beim nächsten Mal genauso aussieht.
