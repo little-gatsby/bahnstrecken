@@ -85,24 +85,50 @@ function writeLayerChoice(choice) {
   }
 }
 
-export function createMap(element, { onMapClick, onStopMoved, onTripClick }) {
+// Ganz Europa – Startansicht auf dem Handy.
+const EUROPE = [[36, -10], [70, 32]];
+
+// bottomInset: wie viel der Karte unten verdeckt ist (die Schublade auf dem
+// Handy); Einpassen und Popups halten diesen Bereich frei.
+export function createMap(element, { onMapClick, onMapTap = () => {}, onStopMoved, onTripClick, bottomInset = () => 0 }) {
   // Doppelklick setzt einen Halt (siehe unten) und zoomt deshalb nicht.
-  const map = L.map(element, { worldCopyJump: true, doubleClickZoom: false }).setView([51.2, 10.4], 6);
+  // Nördlich und südlich der Weltkarte gibt es nur graue Fläche – dorthin
+  // lässt sich die Karte nicht schieben.
+  const map = L.map(element, {
+    worldCopyJump: true,
+    doubleClickZoom: false,
+    maxBounds: [[-85, -100_000], [85, 100_000]],
+    maxBoundsViscosity: 1,
+  }).setView([51.2, 10.4], 6);
+
+  // So weit herauszoomen, dass die Welt höher ist als die Karte, geht nicht –
+  // sonst bleiben oben und unten graue Streifen.
+  function updateMinZoom() {
+    const height = map.getSize().y;
+    if (height > 0) map.setMinZoom(Math.max(0, Math.ceil(Math.log2(height / 256))));
+  }
 
   // In einem Hintergrund-Tab hat die Karte beim Laden keine Größe; fitBounds
   // springt dann auf die höchste Zoomstufe. Deshalb erst einpassen, wenn sie
   // sichtbar ist, und bei Größenänderungen nachmessen.
   let pendingFit = null;
   const hasSize = () => map.getSize().x > 0 && map.getSize().y > 0;
-  function fitBounds(bounds, options) {
-    if (hasSize()) map.fitBounds(bounds, options);
-    else pendingFit = [bounds, options];
+  function fitBounds(bounds, options = {}) {
+    if (!hasSize()) {
+      pendingFit = [bounds, options];
+      return;
+    }
+    const [x, y] = options.padding ?? [0, 0];
+    map.fitBounds(bounds, { ...options, paddingTopLeft: [x, y], paddingBottomRight: [x, y + bottomInset()] });
   }
+  updateMinZoom();
   new ResizeObserver(() => {
     map.invalidateSize();
+    updateMinZoom();
     if (pendingFit && hasSize()) {
-      map.fitBounds(...pendingFit);
+      const fit = pendingFit;
       pendingFit = null;
+      fitBounds(...fit);
     }
   }).observe(element);
 
@@ -139,6 +165,7 @@ export function createMap(element, { onMapClick, onStopMoved, onTripClick }) {
   // Erst ein Doppelklick überträgt den Punkt ins Formular – ein einfacher Klick
   // in die Karte (etwa zum Schließen eines Popups) soll keine Fahrt beginnen.
   map.on('dblclick', (e) => onMapClick({ lon: e.latlng.lng, lat: e.latlng.lat }));
+  map.on('click', onMapTap);
 
   function showTrips(trips) {
     tripLayer.clearLayers();
@@ -171,6 +198,15 @@ export function createMap(element, { onMapClick, onStopMoved, onTripClick }) {
         if (zoom) fitBounds(line.getBounds(), { padding: [30, 30] });
       }
     }
+  }
+
+  // Mit ganzen Zoomstufen passt Europa im Hochformat nur samt halb Afrika
+  // hinein – deshalb hier in Viertelschritten einpassen.
+  function fitEurope() {
+    const snap = map.options.zoomSnap;
+    map.options.zoomSnap = 0.25;
+    fitBounds(EUROPE, { padding: [10, 10], animate: false });
+    map.options.zoomSnap = snap;
   }
 
   function fitAllTrips() {
@@ -209,6 +245,7 @@ export function createMap(element, { onMapClick, onStopMoved, onTripClick }) {
   const popup = L.popup({ maxWidth: 320, minWidth: 260, autoPanPadding: [20, 20] });
 
   function openPopup(latlng, content) {
+    popup.options.autoPanPaddingBottomRight = [20, 20 + bottomInset()];
     popup.setLatLng(latlng).setContent(content).openOn(map);
   }
 
@@ -216,5 +253,5 @@ export function createMap(element, { onMapClick, onStopMoved, onTripClick }) {
     map.closePopup(popup);
   }
 
-  return { showTrips, showCountries, selectTrip, fitAllTrips, showDraft, fitDraft, openPopup, closePopup };
+  return { showTrips, showCountries, selectTrip, fitAllTrips, fitEurope, showDraft, fitDraft, openPopup, closePopup };
 }

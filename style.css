@@ -44,11 +44,80 @@ html, body {
   min-height: 0;
 }
 
-/* Auf dem Handy: Karte oben, Bedienfeld darunter */
+#sheet-bar { display: none; }
+
+/* Auf dem Handy: Karte über den ganzen Bildschirm, das Bedienfeld liegt als
+   Schublade darüber. Zugeklappt schaut nur die Leiste unten heraus. */
 @media (max-width: 760px) {
-  #app { flex-direction: column-reverse; }
-  #map { flex: none; height: 55vh; }
-  #panel { width: auto; flex: 1; border-right: none; border-top: 1px solid var(--line); }
+  :root { --sheet-height: 72dvh; }
+
+  #app { display: block; }
+  #map { position: fixed; inset: 0; z-index: 0; }
+
+  #panel {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1;
+    width: auto;
+    height: var(--sheet-height);
+    padding: 0 16px calc(16px + env(safe-area-inset-bottom));
+    border: none;
+    border-radius: 16px 16px 0 0;
+    background: var(--bg);
+    box-shadow: 0 -4px 20px rgb(0 0 0 / 0.18);
+    overflow: hidden;
+    transform: translateY(calc(100% - var(--peek, 64px)));
+    transition: transform 0.25s ease;
+  }
+
+  #app.sheet-open #panel { transform: none; overflow-y: auto; overscroll-behavior: contain; }
+
+  #sheet-bar {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 -16px 8px;
+    padding: 14px 16px calc(10px + env(safe-area-inset-bottom));
+    background: var(--bg);
+  }
+
+  #app.sheet-open #sheet-bar { padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+
+  #sheet-toggle {
+    flex: 1;
+    min-width: 0;
+    padding: 6px 0;
+    border: none;
+    background: none;
+    color: var(--text);
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-align: left;
+  }
+
+  #sheet-stats { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .grabber {
+    position: absolute;
+    top: 6px;
+    left: 50%;
+    width: 40px;
+    height: 4px;
+    margin-left: -20px;
+    border-radius: 2px;
+    background: var(--line);
+  }
+
+  .sheet-shortcuts { display: flex; gap: 6px; flex: none; }
+  .sheet-shortcuts button { padding: 6px 11px; font-size: 0.9rem; }
+
+  /* Maßstab und Quellenangabe über der Leiste halten */
+  .leaflet-bottom { bottom: var(--peek, 64px); }
 }
 
 h1 { font-size: 1.35rem; margin: 0; }

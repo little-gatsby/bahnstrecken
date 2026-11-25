@@ -38,8 +38,47 @@ const draft = {
   editingId: null, // gesetzt, solange eine gespeicherte Fahrt bearbeitet wird
 };
 
+// ---------- Schublade auf dem Handy ----------
+
+const mobile = matchMedia('(max-width: 760px)');
+
+function sheetOpen() {
+  return $('app').classList.contains('sheet-open');
+}
+
+function setSheet(open) {
+  $('app').classList.toggle('sheet-open', open);
+  $('sheet-toggle').setAttribute('aria-expanded', String(open));
+  if (!open) $('panel').scrollTop = 0;
+}
+
+// Wie viel die Schublade von der Karte verdeckt.
+function sheetInset() {
+  if (!mobile.matches) return 0;
+  return sheetOpen() ? $('panel').offsetHeight : $('sheet-bar').offsetHeight;
+}
+
+// Zugeklappt schaut genau die Leiste heraus.
+new ResizeObserver(() => {
+  document.documentElement.style.setProperty('--peek', `${$('sheet-bar').offsetHeight}px`);
+}).observe($('sheet-bar'));
+
+function openSheetAt(target) {
+  setSheet(true);
+  const panel = $('panel');
+  const top = target.getBoundingClientRect().top - panel.getBoundingClientRect().top + panel.scrollTop;
+  panel.scrollTo({ top: top - $('sheet-bar').offsetHeight - 8, behavior: 'smooth' });
+}
+
+$('sheet-toggle').addEventListener('click', () => setSheet(!sheetOpen()));
+$('sheet-new').addEventListener('click', () => openSheetAt($('form-title')));
+$('sheet-trips').addEventListener('click', () => openSheetAt($('my-trips')));
+
 const mapView = createMap($('map'), {
   onMapClick: addStopFromMap,
+  // Ein Tipp in die Karte klappt die Schublade weg.
+  onMapTap: () => { if (mobile.matches) setSheet(false); },
+  bottomInset: sheetInset,
   onStopMoved: (index, position) => {
     Object.assign(draft.stops[index], position);
     nameStop(draft.stops[index]);
@@ -56,6 +95,7 @@ const mapView = createMap($('map'), {
 function showMessage(text) {
   $('message').textContent = text;
   $('message').hidden = false;
+  if (mobile.matches) setSheet(true);
 }
 
 function clearMessage() {
@@ -68,6 +108,10 @@ function showLogin() {
   $('login-view').hidden = false;
   $('main-view').hidden = true;
   $('user-box').hidden = true;
+  $('sheet-new').hidden = true;
+  $('sheet-trips').hidden = true;
+  $('sheet-stats').textContent = 'Passwort eingeben';
+  setSheet(true);
   trips = [];
   showTripsOnMap();
 }
@@ -76,6 +120,9 @@ async function enterApp() {
   $('login-view').hidden = true;
   $('main-view').hidden = false;
   $('user-box').hidden = false;
+  $('sheet-new').hidden = false;
+  $('sheet-trips').hidden = false;
+  setSheet(false);
   $('user-email').textContent = accessName();
   renderStops();
   renderTrips();
@@ -83,7 +130,9 @@ async function enterApp() {
     trips = await loadTrips();
     renderTrips();
     showTripsOnMap();
-    mapView.fitAllTrips();
+    // Auf dem Handy zeigt die Startansicht Europa statt aller Fahrten weltweit.
+    if (mobile.matches) mapView.fitEurope();
+    else mapView.fitAllTrips();
   } catch (err) {
     handleStoreError(err);
   }
@@ -403,7 +452,8 @@ function startEditing(trip) {
   mapView.showDraft(draft.stops, draft.route.coords);
   mapView.fitDraft();
   renderRouteInfo();
-  $('form-title').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  if (mobile.matches) openSheetAt($('form-title'));
+  else $('form-title').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // Popup an der angeklickten Linie: alle Angaben der Fahrt; Trip, Jahr und
@@ -596,6 +646,9 @@ function tripTitle(trip) {
 function renderStats() {
   const shown = visibleTrips();
   const total = shown.reduce((sum, t) => sum + t.lengthM, 0);
+  $('sheet-stats').textContent = shown.length
+    ? `${countLabel(shown.length)} · ${formatKm(total)}`
+    : 'Bahnstrecken';
   $('stats').textContent = shown.length
     ? [
       countLabel(shown.length),

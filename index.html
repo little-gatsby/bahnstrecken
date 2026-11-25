@@ -16,6 +16,18 @@
 <body>
   <div id="app">
     <aside id="panel">
+      <!-- Nur auf dem Handy: Leiste am unteren Rand, schiebt das Bedienfeld hoch. -->
+      <div id="sheet-bar">
+        <button type="button" id="sheet-toggle" aria-expanded="false" aria-controls="panel">
+          <span class="grabber" aria-hidden="true"></span>
+          <span id="sheet-stats">Bahnstrecken</span>
+        </button>
+        <div class="sheet-shortcuts">
+          <button type="button" id="sheet-new" class="secondary">＋ Fahrt</button>
+          <button type="button" id="sheet-trips" class="secondary">Trips</button>
+        </div>
+      </div>
+
       <header class="panel-header">
         <h1>Bahnstrecken</h1>
         <div id="user-box" hidden>
