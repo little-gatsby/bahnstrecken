@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Bahnstrecken</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+  <script type="module" src="js/main.js"></script>
+</head>
+<body>
+  <div id="app">
+    <aside id="panel">
+      <header class="panel-header">
+        <h1>Bahnstrecken</h1>
+        <div id="user-box" hidden>
+          <span id="user-email"></span>
+          <button type="button" id="logout" class="link-button">Wechseln</button>
+        </div>
+      </header>
+
+      <p id="message" role="status" hidden></p>
+
+      <section id="login-view" hidden>
+        <h2>Passwort</h2>
+        <form id="login-form">
+          <label>Mit deinem Passwort siehst du deine Fahrten und kannst neue eintragen.
+            <input type="password" id="login-password" autocomplete="current-password" required autofocus>
+          </label>
+          <button type="submit">Weiter</button>
+        </form>
+      </section>
+
+      <section id="main-view" hidden>
+        <p id="stats"></p>
+
+        <h2 id="form-title">Neue Fahrt</h2>
+        <form id="trip-form" autocomplete="off">
+          <ol id="stops"></ol>
+          <button type="button" id="add-stop" class="link-button">+ Zwischenhalt</button>
+          <p class="hint">Bahnhof suchen oder doppelt auf die Karte klicken. Punkte lassen sich verschieben,
+            wenn der Zug eine andere Strecke genommen hat.</p>
+          <p id="route-info"></p>
+          <div class="row">
+            <label class="year-field">Jahr
+              <input type="number" id="trip-year" min="1900" max="2100" step="1" inputmode="numeric" required>
+            </label>
+            <label>Zug/Notiz
+              <input type="text" id="trip-note" placeholder="z. B. ICE 577">
+            </label>
+          </div>
+          <label>Trip
+            <input type="text" id="trip-group" class="clearable" list="group-names" placeholder="z. B. Dreiländereck mit Max">
+          </label>
+          <div class="actions">
+            <button type="submit" id="save-trip" disabled>Speichern</button>
+            <button type="button" id="reset-trip" class="secondary">Verwerfen</button>
+          </div>
+        </form>
+
+        <section id="my-trips">
+          <h2>Meine Fahrten</h2>
+          <input type="search" id="trip-search" placeholder="Trip oder Fahrt suchen" aria-label="Trip oder Fahrt suchen">
+
+          <div id="group-header" hidden>
+            <button type="button" id="back-to-overview" class="link-button">← Zurück</button>
+            <div class="group-title-row">
+              <h3 id="group-title"></h3>
+              <button type="button" id="rename-group" class="link-button">Umbenennen</button>
+            </div>
+          </div>
+
+          <ul id="group-list"></ul>
+
+          <div id="select-bar" hidden>
+            <button type="button" id="toggle-select" class="link-button">Fahrten auswählen</button>
+            <button type="button" id="select-all" class="link-button" hidden>Alle auswählen</button>
+          </div>
+          <div id="group-assign" hidden>
+            <p id="selected-count"></p>
+            <div class="assign-row">
+              <input type="text" id="assign-group" class="clearable" list="group-names" placeholder="Trip" aria-label="Trip">
+              <button type="button" id="assign-button">Zuweisen</button>
+            </div>
+            <button type="button" id="ungroup-button" class="link-button">Aus Trip nehmen</button>
+          </div>
+
+          <ul id="trip-list"></ul>
+        </section>
+        <datalist id="group-names"></datalist>
+      </section>
+
+      <footer class="panel-footer">
+        <a href="https://github.com/little-gatsby/bahnstrecken">Quellcode und Kontakt</a> (MIT-Lizenz)
+      </footer>
+    </aside>
+
+    <div id="map"></div>
+  </div>
+</body>
+</html>

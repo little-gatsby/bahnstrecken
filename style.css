@@ -1,0 +1,403 @@
+:root {
+  --bg: #ffffff;
+  --text: #1f2328;
+  --muted: #656d76;
+  --line: #d8dee4;
+  --soft: #f3f4f6;
+  --accent: #6d28d9;
+  --accent-text: #ffffff;
+  --danger: #b42318;
+  --preview: #2563eb;
+  --tint: #f6f3fd;      /* Hintergrund „Meine Fahrten“ */
+  --tint-hover: #ebe5fa;
+}
+
+* { box-sizing: border-box; }
+
+/* hidden muss auch gegen display: flex o. Ä. aus eigenen Regeln gewinnen. */
+[hidden] { display: none !important; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 15px;
+  color: var(--text);
+  background: var(--bg);
+}
+
+#app {
+  display: flex;
+  height: 100%;
+}
+
+#panel {
+  width: 380px;
+  flex: none;
+  overflow-y: auto;
+  padding: 16px;
+  border-right: 1px solid var(--line);
+}
+
+#map {
+  flex: 1;
+  min-height: 0;
+}
+
+/* Auf dem Handy: Karte oben, Bedienfeld darunter */
+@media (max-width: 760px) {
+  #app { flex-direction: column-reverse; }
+  #map { flex: none; height: 55vh; }
+  #panel { width: auto; flex: 1; border-right: none; border-top: 1px solid var(--line); }
+}
+
+h1 { font-size: 1.35rem; margin: 0; }
+h2 { font-size: 1.05rem; margin: 24px 0 8px; }
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+#user-box { font-size: 0.85rem; color: var(--muted); }
+
+label {
+  display: block;
+  margin: 8px 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+input {
+  display: block;
+  width: 100%;
+  margin-top: 3px;
+  padding: 7px 9px;
+  font: inherit;
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg);
+}
+
+input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+
+button {
+  font: inherit;
+  padding: 7px 14px;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  background: var(--accent);
+  color: var(--accent-text);
+  cursor: pointer;
+}
+
+button:disabled { opacity: 0.45; cursor: default; }
+
+button.secondary {
+  background: transparent;
+  color: var(--accent);
+}
+
+.link-button {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.row { display: flex; gap: 10px; }
+.row label { flex: 1; min-width: 0; }
+.row .year-field { flex: 0 0 6.5em; }
+
+.actions { display: flex; gap: 8px; margin-top: 12px; }
+
+.hint { font-size: 0.8rem; color: var(--muted); margin: 6px 0; }
+
+#message {
+  margin: 12px 0 0;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: #fdecea;
+  color: var(--danger);
+  font-size: 0.9rem;
+}
+
+#stats { margin: 12px 0 0; font-weight: 600; }
+
+#route-info { min-height: 1.2em; margin: 6px 0; font-size: 0.9rem; }
+#route-info.error { color: var(--danger); }
+
+/* Halte der neuen Fahrt */
+#stops {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.stop {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.stop-badge {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--preview);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+}
+
+.stop.unset .stop-badge { background: var(--muted); }
+
+.stop input { margin: 0; }
+
+.stop .remove {
+  flex: none;
+  padding: 2px 8px;
+  border: none;
+  background: none;
+  color: var(--muted);
+  font-size: 1.1rem;
+}
+
+.suggestions {
+  position: absolute;
+  top: 100%;
+  left: 28px;
+  right: 0;
+  z-index: 1000;
+  margin: 2px 0 0;
+  padding: 0;
+  list-style: none;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  box-shadow: 0 4px 14px rgb(0 0 0 / 0.12);
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.suggestions li {
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.suggestions li:hover,
+.suggestions li.active { background: var(--soft); }
+
+.suggestions small { display: block; color: var(--muted); }
+
+/* Liste der gespeicherten Fahrten */
+#trip-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+#trip-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 6px;
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+}
+
+#trip-list li:hover,
+#trip-list li.selected { background: var(--tint-hover); }
+
+.trip-title { font-weight: 600; }
+.trip-meta { font-size: 0.8rem; color: var(--muted); }
+
+/* Bereich „Meine Fahrten“: ganz leicht eingefärbt */
+#my-trips {
+  margin-top: 26px;
+  padding: 2px 12px 12px;
+  border-radius: 10px;
+  background: var(--tint);
+}
+
+#my-trips h2 { margin-top: 12px; }
+
+#trip-search { margin: 0 0 10px; }
+
+#group-header { margin: 4px 0 6px; }
+
+.group-title-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+#group-title { margin: 6px 0 0; font-size: 1.05rem; }
+
+#group-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+#group-list li {
+  padding: 8px 6px;
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+}
+
+#group-list li:hover { background: var(--tint-hover); }
+#group-list li.active { background: var(--tint-hover); box-shadow: inset 3px 0 0 var(--accent); }
+
+/* ⓘ hinter dem Trip-Namen: öffnet die Fahrtenliste, erscheint beim Hovern */
+.info-button {
+  margin-left: 6px;
+  padding: 0 4px;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font-size: 1rem;
+  line-height: 1;
+  vertical-align: baseline;
+  visibility: hidden;
+}
+
+#group-list li:hover .info-button,
+.info-button:focus-visible { visibility: visible; }
+
+/* Ohne Maus (Handy, Tablet) gibt es kein Hovern – dann immer zeigen. */
+@media (hover: none) {
+  .info-button { visibility: visible; }
+}
+#group-list li.special .trip-title { font-weight: 400; color: var(--muted); }
+#group-list .empty { color: var(--muted); cursor: default; }
+
+#select-bar {
+  display: flex;
+  gap: 14px;
+  margin: 10px 0 4px;
+  font-size: 0.9rem;
+}
+
+#group-assign {
+  margin: 4px 0 8px;
+  padding: 10px;
+  border-radius: 6px;
+  background: var(--bg);
+}
+
+/* Trip-Feld mit × zum Abwählen der Auswahl */
+.clearable-wrap {
+  position: relative;
+  display: block;
+  margin-top: 3px;
+  flex: 1;
+}
+
+.clearable-wrap input { margin: 0; padding-right: 28px; }
+
+.clear-button {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  transform: translateY(-50%);
+  padding: 0 6px;
+  border: none;
+  background: none;
+  color: var(--muted);
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.clear-button:hover { color: var(--text); }
+
+/* Popup an einer Fahrt in der Karte */
+.trip-popup { font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; color: var(--text); }
+.popup-title { font-weight: 600; margin-bottom: 4px; }
+.popup-stops { margin: 0 0 4px; padding-left: 20px; font-size: 0.85rem; }
+.popup-form label { margin: 6px 0; }
+.popup-form .actions { margin-top: 8px; }
+.popup-form button { padding: 5px 10px; font-size: 0.85rem; }
+
+#selected-count { margin: 0 0 6px; font-size: 0.85rem; color: var(--muted); }
+
+.assign-row { display: flex; gap: 6px; margin-bottom: 6px; }
+.assign-row input { margin: 0; }
+.assign-row button { flex: none; }
+
+#ungroup-button { font-size: 0.85rem; }
+#ungroup-button:disabled { opacity: 0.45; }
+
+.trip-check {
+  flex: none;
+  width: auto;
+  margin: 3px 2px 0 0;
+  align-self: flex-start;
+}
+
+.trip-text { flex: 1; min-width: 0; }
+
+.panel-footer {
+  margin-top: 28px;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.panel-footer a { color: inherit; }
+
+.trip-year {
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline dotted;
+  text-underline-offset: 2px;
+  cursor: text;
+}
+
+.trip-year:hover { color: var(--accent); }
+
+.trip-year-input {
+  display: inline-block;
+  width: 5.5em;
+  margin: 0;
+  padding: 1px 4px;
+  font-size: inherit;
+}
+
+#trip-list .remove {
+  align-self: center;
+  padding: 2px 6px;
+  border: none;
+  background: none;
+  color: var(--muted);
+}
+
+#trip-list .empty { color: var(--muted); cursor: default; }
+
+/* Karte */
+.basemap-faded { filter: grayscale(1) contrast(0.85) brightness(1.08); }
+
+.stop-marker {
+  width: 24px;
+  height: 24px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: var(--preview);
+  color: #fff;
+  font: 700 12px/20px system-ui, sans-serif;
+  text-align: center;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.4);
+}
